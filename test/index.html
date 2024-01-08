@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>To-Do List with Drag and Drop</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 20px;
+      }
+
+      input,
+      select,
+      button {
+        margin-bottom: 10px;
+        padding: 8px;
+        font-size: 16px;
+      }
+
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      .importance-section {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 20px;
+      }
+
+      .importance-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        max-width: 400px;
+      }
+
+      li {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
+      }
+
+      .details {
+        display: none;
+        font-size: 14px;
+        margin-top: 5px;
+        text-align: left;
+      }
+
+      .mdl {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+      }
+
+      .mdl-cnt {
+        background-color: #fefefe;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: left;
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .close:hover {
+        color: black;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>To-Do List with Drag and Drop</h1>
+    <input type="text" id="tInput" placeholder="Task..." />
+    <input type="text" id="dInput" placeholder="Due Date..." />
+    <input type="text" id="pInput" placeholder="Priority..." />
+    <select id="gSelect">
+      <option value="High">High</option>
+      <option value="Medium">Medium</option>
+      <option value="Low">Low</option>
+    </select>
+    <button onclick="aTask()">Add Task</button>
+
+    <div class="importance-section">
+      <ul
+        id="highImportance"
+        class="importance-list"
+        ondrop="drop(event, 'highImportance')"
+        ondragover="allowDrop(event)"
+      ></ul>
+      <ul
+        id="mediumImportance"
+        class="importance-list"
+        ondrop="drop(event, 'mediumImportance')"
+        ondragover="allowDrop(event)"
+      ></ul>
+      <ul
+        id="lowImportance"
+        class="importance-list"
+        ondrop="drop(event, 'lowImportance')"
+        ondragover="allowDrop(event)"
+      ></ul>
+    </div>
+
+    <!-- The Modal -->
+    <div id="mModal" class="mdl">
+      <div class="mdl-cnt">
+        <span class="close" onclick="cModal()">&times;</span>
+        <h2>Edit Task</h2>
+        <input type="text" id="etName" placeholder="Task..." />
+        <input type="text" id="eDueDate" placeholder="Due Date..." />
+        <input type="text" id="ePriority" placeholder="Priority..." />
+        <select id="eGroup">
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <button onclick="sChanges()">Save Changes</button>
+      </div>
+    </div>
+
+    <script>
+      function aTask() {
+        var tInput = document.getElementById("tInput");
+        var dInput = document.getElementById("dInput");
+        var pInput = document.getElementById("pInput");
+        var gSelect = document.getElementById("gSelect");
+
+        var tText = tInput.value;
+        var dueDate = dInput.value;
+        var priority = pInput.value;
+        var sGroup = gSelect.value;
+
+        tInput.value = "";
+        dInput.value = "";
+        pInput.value = "";
+
+        var lItem = document.createElement("li");
+        lItem.setAttribute("draggable", "true");
+        lItem.setAttribute("ondragstart", "drag(event)");
+
+        var tName = document.createElement("span");
+        tName.appendChild(document.createTextNode(tText));
+        lItem.appendChild(tName);
+
+        var tDtls = document.createElement("div");
+        tDtls.className = "details";
+        tDtls.innerHTML = `<strong>Due Date:</strong> ${dueDate}<br>
+                                     <strong>Priority:</strong> ${priority}<br>
+                                     <strong>Group:</strong> ${sGroup}`;
+        lItem.appendChild(tDtls);
+
+        var editButton = document.createElement("button");
+        editButton.appendChild(document.createTextNode("Edit"));
+        editButton.onclick = function () {
+          openModal();
+          document.getElementById("etName").value = tText;
+          document.getElementById("eDueDate").value = dueDate;
+          document.getElementById("ePriority").value = priority;
+          document.getElementById("eGroup").value = sGroup;
+        };
+        lItem.appendChild(editButton);
+
+        var deleteButton = document.createElement("button");
+        deleteButton.appendChild(document.createTextNode("Delete"));
+        deleteButton.onclick = function () {
+          lItem.remove();
+        };
+        lItem.appendChild(deleteButton);
+
+        lItem.onclick = function () {
+          // Toggle the visibility of task details on click
+          tDtls.style.display =
+            tDtls.style.display === "none" ? "block" : "none";
+        };
+
+        // Append the new task to the corresponding importance level
+        var importanceList = document.getElementById(
+          sGroup.toLowerCase() + "Importance"
+        );
+        importanceList.appendChild(lItem);
+      }
+
+      function cModal() {
+        document.getElementById("mModal").style.display = "none";
+      }
+
+      function openModal() {
+        document.getElementById("mModal").style.display = "block";
+      }
+
+      function sChanges() {
+        var tNameInput = document.getElementById("etName");
+        var eDueDateInput = document.getElementById("eDueDate");
+        var ePriorityInput = document.getElementById("ePriority");
+        var eGroupSelect = document.getElementById("eGroup");
+
+        var updatedTaskName = tNameInput.value;
+        var updatedDueDate = eDueDateInput.value;
+        var updatedPriority = ePriorityInput.value;
+        var updatedGroup = eGroupSelect.value;
+
+        // Update the task details in the list
+        var selectedTask = document.querySelector(
+          '.details:not([style="display: none;"])'
+        );
+        selectedTask.innerHTML = `<strong>Due Date:</strong> ${updatedDueDate}<br>
+                                      <strong>Priority:</strong> ${updatedPriority}<br>
+                                      <strong>Group:</strong> ${updatedGroup}`;
+
+        // Update the task name
+        selectedTask.previousElementSibling.textContent = updatedTaskName;
+
+        // Close the modal
+        cModal();
+      }
+
+      function allowDrop(ev) {
+        ev.preventDefault();
+      }
+
+      function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.id);
+      }
+
+      function drop(ev, importance) {
+        ev.preventDefault();
+        var data = ev.dataTransfer.getData("text");
+        var draggedElement = document.getElementById(data);
+        var copyDraggedElement = draggedElement.cloneNode(true);
+
+        // Set the group value based on the importance section
+        var groupSelect = copyDraggedElement.querySelector(".group-select");
+        groupSelect.value = importance;
+
+        // Append the cloned element to the specified importance section
+        document.getElementById(importance).appendChild(copyDraggedElement);
+
+        // Remove the original dragged element
+        draggedElement.parentNode.removeChild(draggedElement);
+
+        // Attach drag event to the newly added element
+        copyDraggedElement.setAttribute("draggable", "true");
+        copyDraggedElement.setAttribute("ondragstart", "drag(event)");
+        copyDraggedElement.onclick = function () {
+          openModal();
+          document.getElementById("etName").value =
+            copyDraggedElement.querySelector("span").textContent;
+          document.getElementById("eDueDate").value = copyDraggedElement
+            .querySelector(".details strong:nth-child(2)")
+            .textContent.split(": ")[1];
+          document.getElementById("ePriority").value = copyDraggedElement
+            .querySelector(".details strong:nth-child(4)")
+            .textContent.split(": ")[1];
+          document.getElementById("eGroup").value = groupSelect.value;
+        };
+      }
+    </script>
+  </body>
+</html>
